@@ -48,12 +48,12 @@ struct ps_thre {
         int th_lo;
 };
 static struct ps_thre psthre_data[] = {
-        {50,  37,  12},
-        {100, 40,  16},
-        {200, 50,  30},
-        {400, 100, 50},
-        {1200,200, 100},
-        {1650,200, 100},
+	{50,  20,  12},
+	{100, 24,  16},
+	{200, 40,  30},
+	{400, 80, 50},
+	{1200,200, 100},
+	{1650,200, 100},
 };
 
 struct ltr559_data {
@@ -418,73 +418,73 @@ static int ltr559_als_read(struct i2c_client *client)
 
 static void ltr559_ps_work_func(struct work_struct *work)
 {
-        struct ltr559_data *data = container_of(work, struct ltr559_data, ps_work.work);
-        struct i2c_client *client=data->client;
-        int als_ps_status;
-        int psdata;
-        static u32 ps_state_last = 1;
-        int j = 0;
+	struct ltr559_data *data = container_of(work, struct ltr559_data, ps_work.work);
+	struct i2c_client *client=data->client;
+	int als_ps_status;
+	int psdata;
+	static u32 ps_state_last = 1;
+	int j = 0;
 
-        mutex_lock(&data->op_lock);
+	mutex_lock(&data->op_lock);
 
-        als_ps_status = i2c_smbus_read_byte_data(client, LTR559_ALS_PS_STATUS);
-        if (als_ps_status < 0)
-                        goto workout;
-        /* Here should check data status,ignore interrupt status. */
-        /* Bit 0: PS Data
-         * Bit 1: PS interrupt
-         * Bit 2: ASL Data
-         * Bit 3: ASL interrupt
-         * Bit 4: ASL Gain 0: ALS measurement data is in dynamic range 2 (2 to 64k lux)
-         *                 1: ALS measurement data is in dynamic range 1 (0.01 to 320 lux)
-         */
-        if ((data->ps_open_state == 1) && (als_ps_status & 0x02)) {
-                psdata = i2c_smbus_read_word_data(client,LTR559_PS_DATA_0);
-                if (psdata < 0) {
-                                goto workout;
-                }
-                if(psdata >= data->platform_data->prox_threshold){
-                        data->ps_state = 0;    /* near */
-                        ltr559_set_ps_threshold(client, LTR559_PS_THRES_LOW_0, data->platform_data->prox_hsyteresis_threshold);
-                        ltr559_set_ps_threshold(client, LTR559_PS_THRES_UP_0, 0x07ff);
-                } else if (psdata <= data->platform_data->prox_hsyteresis_threshold){
-                        data->ps_state = 1;    /* far */
+	als_ps_status = i2c_smbus_read_byte_data(client, LTR559_ALS_PS_STATUS);
+	if (als_ps_status < 0)
+			goto workout;
+	/* Here should check data status,ignore interrupt status. */
+	/* Bit 0: PS Data
+	 * Bit 1: PS interrupt
+	 * Bit 2: ASL Data
+	 * Bit 3: ASL interrupt
+	 * Bit 4: ASL Gain 0: ALS measurement data is in dynamic range 2 (2 to 64k lux)
+	 *                 1: ALS measurement data is in dynamic range 1 (0.01 to 320 lux)
+	 */
+	if ((data->ps_open_state == 1) && (als_ps_status & 0x02)) {
+		psdata = i2c_smbus_read_word_data(client,LTR559_PS_DATA_0);
+		if (psdata < 0) {
+				goto workout;
+		}
+		if(psdata >= data->platform_data->prox_threshold){
+			data->ps_state = 0;    /* near */
+			ltr559_set_ps_threshold(client, LTR559_PS_THRES_LOW_0, data->platform_data->prox_hsyteresis_threshold);
+			ltr559_set_ps_threshold(client, LTR559_PS_THRES_UP_0, 0x07ff);
+		} else if (psdata <= data->platform_data->prox_hsyteresis_threshold){
+			data->ps_state = 1;    /* far */
 
-                        /*dynamic calibration */
-                        if (data->dynamic_noise > 20 && psdata < (data->dynamic_noise - 50) ) {
-                                data->dynamic_noise = psdata;
+			/*dynamic calibration */
+			if (data->dynamic_noise > 20 && psdata < (data->dynamic_noise - 50) ) {
+				data->dynamic_noise = psdata;
 
-                                for(j=0; j<ARRAY_SIZE(psthre_data); j++) {
-                                        if(psdata < psthre_data[j].noise) {
-                                                data->platform_data->prox_threshold = psdata + psthre_data[j].th_hi;
-                                                data->platform_data->prox_hsyteresis_threshold = psdata + psthre_data[j].th_lo;
-                                                break;
-                                        }
-                                }
-                                if(j == ARRAY_SIZE(psthre_data)) {
-                                        data->platform_data->prox_threshold = 1700;
-                                        data->platform_data->prox_hsyteresis_threshold = 1680;
-                                        pr_err("ltr559 the proximity sensor rubber or structure is error!\n");
-                                }
-                        }
+				for(j=0; j<ARRAY_SIZE(psthre_data); j++) {
+					if(psdata < psthre_data[j].noise) {
+						data->platform_data->prox_threshold = psdata + psthre_data[j].th_hi;
+						data->platform_data->prox_hsyteresis_threshold = psdata + psthre_data[j].th_lo;
+						break;
+					}
+				}
+				if(j == ARRAY_SIZE(psthre_data)) {
+					data->platform_data->prox_threshold = 1700;
+					data->platform_data->prox_hsyteresis_threshold = 1680;
+					pr_err("ltr559 the proximity sensor rubber or structure is error!\n");
+				}
+			}
 
-                        ltr559_set_ps_threshold(client, LTR559_PS_THRES_LOW_0, 0);
-                        ltr559_set_ps_threshold(client, LTR559_PS_THRES_UP_0, data->platform_data->prox_threshold);
-                } else {
-                        data->ps_state = ps_state_last;
-                }
+			ltr559_set_ps_threshold(client, LTR559_PS_THRES_LOW_0, 0);
+			ltr559_set_ps_threshold(client, LTR559_PS_THRES_UP_0, data->platform_data->prox_threshold);
+		} else {
+			data->ps_state = ps_state_last;
+		}
 
-                if(ps_state_last != data->ps_state)
-                {
-                        input_report_abs(data->input_dev_ps, ABS_DISTANCE, data->ps_state);
-                        input_sync(data->input_dev_ps);
-                        printk("%s, report ABS_DISTANCE=%s\n",__func__, data->ps_state ? "far" : "near");
+		if((ps_state_last != data->ps_state) || (data->ps_state == 0))
+		{
+			input_report_abs(data->input_dev_ps, ABS_DISTANCE, data->ps_state);
+			input_sync(data->input_dev_ps);
+			printk("%s, report ABS_DISTANCE=%s\n",__func__, data->ps_state ? "far" : "near");
 
-                        ps_state_last = data->ps_state;
-                }
-                else
-                        printk("%s, ps_state still %s\n", __func__, data->ps_state ? "far" : "near");
-        }
+			ps_state_last = data->ps_state;
+		}
+		else
+			printk("%s, ps_state still %s\n", __func__, data->ps_state ? "far" : "near");
+	}
 workout:
         enable_irq(data->irq);
         mutex_unlock(&data->op_lock);
@@ -800,78 +800,90 @@ static int ltr559_als_poll_delay(struct sensors_classdev *sensors_cdev,
 
 static ssize_t ltr559_ps_dynamic_caliberate(struct sensors_classdev *sensors_cdev)
 {
-        struct ltr559_data *data = container_of(sensors_cdev, struct ltr559_data, ps_cdev);
-        struct ltr559_platform_data *pdata = data->platform_data;
-        int i = 0, j = 0;
-        int ps;
-        int data_total=0;
-        int noise = 0;
-        int count = 3;
-        int max = 0;
+	struct ltr559_data *data = container_of(sensors_cdev, struct ltr559_data, ps_cdev);
+	struct ltr559_platform_data *pdata = data->platform_data;
+	int i = 0, j = 0;
+	int ps;
+	int data_total=0;
+	int noise = 0;
+	int count = 3;
+	int max = 0;
 
-        if(!data)
-        {
-                pr_err("ltr559_data is null!!\n");
-                return -EFAULT;
-        }
+	if(!data)
+	{
+		pr_err("ltr559_data is null!!\n");
+		return -EFAULT;
+	}
 
-        /* wait for register to be stable */
-        msleep(15);
+	/* wait for register to be stable */
+	msleep(15);
 
-        for (i = 0; i < count; i++) {
-                /* wait for ps value be stable */
+	for (i = 0; i < count; i++) {
+		/* wait for ps value be stable */
 
-                msleep(15);
+		msleep(15);
 
-                ps = ltr559_ps_read(data->client);
-                if (ps < 0) {
-                        i--;
-                        continue;
-                }
+		ps = ltr559_ps_read(data->client);
+		if (ps < 0) {
+			i--;
+			continue;
+		}
 
-                if(ps & 0x8000){
-                        noise = 0;
-                        break;
-                } else {
-                        noise = ps;
-                }
+		if(ps & 0x8000){
+			noise = 0;
+			break;
+		} else {
+			noise = ps;
+		}
 
-                data_total += ps;
+		data_total += ps;
 
-                if (max++ > 10) {
-                        pr_err("ltr559 read data error!\n");
-                        return -EFAULT;
-                }
-        }
+		if (max++ > 10) {
+			pr_err("ltr559 read data error!\n");
+			return -EFAULT;
+		}
+	}
 
-        noise = data_total/count;
-        data->dynamic_noise = noise;
+	noise = data_total/count;
+	data->dynamic_noise = noise;
 
-        for(j=0; j<ARRAY_SIZE(psthre_data); j++) {
-                if(noise < psthre_data[j].noise) {
-                        pdata->prox_threshold = noise + psthre_data[j].th_hi;
-                        pdata->prox_hsyteresis_threshold = noise + psthre_data[j].th_lo;
-                        break;
-                }
-        }
-        if(j == ARRAY_SIZE(psthre_data)) {
-                pdata->prox_threshold = 1700;
-                pdata->prox_hsyteresis_threshold = 1680;
-                pr_err("ltr559 the proximity sensor rubber or structure is error!\n");
-                return -EAGAIN;
-        }
+/*if the noise twice bigger than boot, we treat it as covered mode */
+	   if(pdata->prox_default_noise == 0){
+		   pdata->prox_default_noise = data->dynamic_noise;
+	   }
+	   else if(data->dynamic_noise > (pdata->prox_default_noise * 2)){
+		   noise = pdata->prox_default_noise;
+		   data->dynamic_noise = pdata->prox_default_noise;
+	   }
+	   else if((data->dynamic_noise * 2) < pdata->prox_default_noise){
+		   pdata->prox_default_noise = data->dynamic_noise;
+	   }
 
-        if (data->ps_state == 1) {
-                ltr559_set_ps_threshold(data->client, LTR559_PS_THRES_LOW_0, 0);
-                ltr559_set_ps_threshold(data->client, LTR559_PS_THRES_UP_0, data->platform_data->prox_threshold);
-        } else if (data->ps_state == 0) {
-                ltr559_set_ps_threshold(data->client, LTR559_PS_THRES_LOW_0, data->platform_data->prox_hsyteresis_threshold);
-                ltr559_set_ps_threshold(data->client, LTR559_PS_THRES_UP_0, 0x07ff);
-        }
+	for(j=0; j<ARRAY_SIZE(psthre_data); j++) {
+		if(noise < psthre_data[j].noise) {
+			pdata->prox_threshold = noise + psthre_data[j].th_hi;
+			pdata->prox_hsyteresis_threshold = noise + psthre_data[j].th_lo;
+			break;
+		}
+	}
+	if(j == ARRAY_SIZE(psthre_data)) {
+		pdata->prox_threshold = 1700;
+		pdata->prox_hsyteresis_threshold = 1680;
+		pr_err("ltr559 the proximity sensor rubber or structure is error!\n");
+		return -EAGAIN;
+	}
 
-        data->cali_update = true;
+	if (data->ps_state == 1) {
+		ltr559_set_ps_threshold(data->client, LTR559_PS_THRES_LOW_0, 0);
+		ltr559_set_ps_threshold(data->client, LTR559_PS_THRES_UP_0, data->platform_data->prox_threshold);
+	} else if (data->ps_state == 0) {
+		ltr559_set_ps_threshold(data->client, LTR559_PS_THRES_LOW_0, data->platform_data->prox_hsyteresis_threshold);
+		ltr559_set_ps_threshold(data->client, LTR559_PS_THRES_UP_0, 0x07ff);
+	}
 
-        return 0;
+	data->cali_update = true;
+
+	return 0;
 }
 
 static int ltr559_ps_set_enable(struct sensors_classdev *sensors_cdev,
@@ -1340,38 +1352,43 @@ int ltr559_probe(struct i2c_client *client, const struct i2c_device_id *id)
         ret = sysfs_create_group(&client->dev.kobj, &ltr559_attr_group);
 
     ret = sysfs_create_group(&data->input_dev_als->dev.kobj, &ltr559_attr_group);
-        ret = sysfs_create_group(&data->input_dev_ps->dev.kobj, &ltr559_attr_group);
+	ret = sysfs_create_group(&data->input_dev_ps->dev.kobj, &ltr559_attr_group);
 
-        if (ret){
-                ret = -EROFS;
-                dev_err(&client->dev,"Unable to creat sysfs group\n");
-                goto exit_unregister_dev_ps;
-        }
+	if (ret){
+		ret = -EROFS;
+		dev_err(&client->dev,"Unable to creat sysfs group\n");
+		goto exit_unregister_dev_ps;
+	}
 
-        /* Register sensors class */
-        data->als_cdev = sensors_light_cdev;
-        data->als_cdev.sensors_enable = ltr559_als_set_enable;
-        data->als_cdev.sensors_poll_delay = ltr559_als_poll_delay;
-        data->ps_cdev = sensors_proximity_cdev;
-        data->ps_cdev.sensors_enable = ltr559_ps_set_enable;
-        data->ps_cdev.sensors_poll_delay = NULL;
+	/* Register sensors class */
+	data->als_cdev = sensors_light_cdev;
+	data->als_cdev.sensors_enable = ltr559_als_set_enable;
+	data->als_cdev.sensors_poll_delay = ltr559_als_poll_delay;
+	data->ps_cdev = sensors_proximity_cdev;
+	data->ps_cdev.sensors_enable = ltr559_ps_set_enable;
+	data->ps_cdev.sensors_poll_delay = NULL;
 
-        ret = sensors_classdev_register(&client->dev, &data->als_cdev);
-        if(ret) {
-                ret = -EROFS;
-                dev_err(&client->dev,"Unable to register to als sensor class\n");
-                goto exit_remove_sysfs_group;
-        }
+	ret = sensors_classdev_register(&client->dev, &data->als_cdev);
+	if(ret) {
+		ret = -EROFS;
+		dev_err(&client->dev,"Unable to register to als sensor class\n");
+		goto exit_remove_sysfs_group;
+	}
 
-        ret = sensors_classdev_register(&client->dev, &data->ps_cdev);
-        if(ret) {
-                ret = -EROFS;
-                dev_err(&client->dev,"Unable to register to ps sensor class\n");
-                goto exit_unregister_als_class;
-        }
+	ret = sensors_classdev_register(&client->dev, &data->ps_cdev);
+	if(ret) {
+		ret = -EROFS;
+		dev_err(&client->dev,"Unable to register to ps sensor class\n");
+		goto exit_unregister_als_class;
+	}
 
-        dev_dbg(&client->dev,"probe succece\n");
-        return 0;
+	/* Enable / disable to trigger calibration at boot */
+	pdata->prox_default_noise=0;
+	ltr559_ps_enable(client,1);
+	ltr559_ps_enable(client,0);
+
+	dev_dbg(&client->dev,"probe succece\n");
+	return 0;
 
 exit_unregister_als_class:
         sensors_classdev_unregister(&data->als_cdev);
