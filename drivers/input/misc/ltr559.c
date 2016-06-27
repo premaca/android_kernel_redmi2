@@ -42,6 +42,9 @@
 
 #define SYS_AUTHORITY           (S_IRUGO|S_IWUGO)
 
+// premaca - define it here, for CM proximity sensor
+#define CONFIG_MACH_WT88047
+
 struct ps_thre {
         int noise;
         int th_hi;
@@ -128,108 +131,112 @@ static int ltr559_ps_set_enable(struct sensors_classdev *sensors_cdev,
 static ssize_t ltr559_ps_dynamic_caliberate(struct sensors_classdev *sensors_cdev);
 
 static  struct ltr559_reg reg_tbl[] = {
-                {
-                                .name   = "ALS_CONTR",
-                                .addr   = 0x80,
-                                .defval = 0x00,
-                                .curval = 0x19,
-                },
-                {
-                                .name = "PS_CONTR",
-                                .addr = 0x81,
-                                .defval = 0x00,
-                                .curval = 0x03,
-                },
-                {
-                                .name = "ALS_PS_STATUS",
-                                .addr = 0x8c,
-                                .defval = 0x00,
-                                .curval = 0x00,
-                },
-                {
-                                .name = "INTERRUPT",
-                                .addr = 0x8f,
-                                .defval = 0x00,
-                                .curval = 0x01,
-                },
-                {
-                                .name = "PS_LED",
-                                .addr = 0x82,
-                                .defval = 0x7f,
-                                .curval = 0x7b,
-                },
-                {
-                                .name = "PS_N_PULSES",
-                                .addr = 0x83,
-                                .defval = 0x01,
-                                .curval = 0x02,
-                },
-                {
-                                .name = "PS_MEAS_RATE",
-                                .addr = 0x84,
-                                .defval = 0x02,
-                                .curval = 0x00,
-                },
-                {
-                                .name = "ALS_MEAS_RATE",
-                                .addr = 0x85,
-                                .defval = 0x03,
-                                .curval = 0x02, /* 200ms */
-                },
-                {
-                                .name = "MANUFACTURER_ID",
-                                .addr = 0x87,
-                                .defval = 0x05,
-                                .curval = 0x05,
-                },
-                {
-                                .name = "INTERRUPT_PERSIST",
-                                .addr = 0x9e,
-                                .defval = 0x00,
-                                .curval = 0x23,
-                },
-                {
-                                .name = "PS_THRES_LOW",
-                                .addr = 0x92,
-                                .defval = 0x0000,
-                                .curval = 0x0000,
-                },
-                {
-                                .name = "PS_THRES_UP",
-                                .addr = 0x90,
-                                .defval = 0x07ff,
-                                .curval = 0x0000,
-                },
-                {
-                                .name = "ALS_THRES_LOW",
-                                .addr = 0x99,
-                                .defval = 0x0000,
-                                .curval = 0x0000,
-                },
-                {
-                                .name = "ALS_THRES_UP",
-                                .addr = 0x97,
-                                .defval = 0xffff,
-                                .curval = 0x0000,
-                },
-                {
-                                .name = "ALS_DATA_CH1",
-                                .addr = 0x88,
-                                .defval = 0x0000,
-                                .curval = 0x0000,
-                },
-                {
-                                .name = "ALS_DATA_CH0",
-                                .addr = 0x8a,
-                                .defval = 0x0000,
-                                .curval = 0x0000,
-                },
-                {
-                                .name = "PS_DATA",
-                                .addr = 0x8d,
-                                .defval = 0x0000,
-                                .curval = 0x0000,
-                },
+		{
+				.name   = "ALS_CONTR",
+				.addr   = 0x80,
+				.defval = 0x00,
+#ifdef CONFIG_MACH_WT88047
+				.curval = 0x0D,
+#else
+				.curval = 0x19,
+#endif
+		},
+		{
+				.name = "PS_CONTR",
+				.addr = 0x81,
+				.defval = 0x00,
+				.curval = 0x03,
+		},
+		{
+				.name = "ALS_PS_STATUS",
+				.addr = 0x8c,
+				.defval = 0x00,
+				.curval = 0x00,
+		},
+		{
+				.name = "INTERRUPT",
+				.addr = 0x8f,
+				.defval = 0x00,
+				.curval = 0x01,
+		},
+		{
+				.name = "PS_LED",
+				.addr = 0x82,
+				.defval = 0x7f,
+				.curval = 0x7b,
+		},
+		{
+				.name = "PS_N_PULSES",
+				.addr = 0x83,
+				.defval = 0x01,
+				.curval = 0x02,
+		},
+		{
+				.name = "PS_MEAS_RATE",
+				.addr = 0x84,
+				.defval = 0x02,
+				.curval = 0x00,
+		},
+		{
+				.name = "ALS_MEAS_RATE",
+				.addr = 0x85,
+				.defval = 0x03,
+				.curval = 0x02,	/* 200ms */
+		},
+		{
+				.name = "MANUFACTURER_ID",
+				.addr = 0x87,
+				.defval = 0x05,
+				.curval = 0x05,
+		},
+		{
+				.name = "INTERRUPT_PERSIST",
+				.addr = 0x9e,
+				.defval = 0x00,
+				.curval = 0x23,
+		},
+		{
+				.name = "PS_THRES_LOW",
+				.addr = 0x92,
+				.defval = 0x0000,
+				.curval = 0x0000,
+		},
+		{
+				.name = "PS_THRES_UP",
+				.addr = 0x90,
+				.defval = 0x07ff,
+				.curval = 0x0000,
+		},
+		{
+				.name = "ALS_THRES_LOW",
+				.addr = 0x99,
+				.defval = 0x0000,
+				.curval = 0x0000,
+		},
+		{
+				.name = "ALS_THRES_UP",
+				.addr = 0x97,
+				.defval = 0xffff,
+				.curval = 0x0000,
+		},
+		{
+				.name = "ALS_DATA_CH1",
+				.addr = 0x88,
+				.defval = 0x0000,
+				.curval = 0x0000,
+		},
+		{
+				.name = "ALS_DATA_CH0",
+				.addr = 0x8a,
+				.defval = 0x0000,
+				.curval = 0x0000,
+		},
+		{
+				.name = "PS_DATA",
+				.addr = 0x8d,
+				.defval = 0x0000,
+				.curval = 0x0000,
+		},
 };
 
 static struct sensors_classdev sensors_light_cdev = {
@@ -304,23 +311,27 @@ static void ltr559_set_ps_threshold(struct i2c_client *client, u8 addr, u16 valu
 
 static int ltr559_ps_enable(struct i2c_client *client, int on)
 {
-        struct ltr559_data *data = i2c_get_clientdata(client);
-        int ret=0;
-        int contr_data;
+	struct ltr559_data *data = i2c_get_clientdata(client);
+	int ret=0;
+	int contr_data;
+#ifdef CONFIG_MACH_WT88047
+	ktime_t	timestamp;
 
-        if (on) {
-                ltr559_set_ps_threshold(client, LTR559_PS_THRES_LOW_0, 0);
-                ltr559_set_ps_threshold(client, LTR559_PS_THRES_UP_0, data->platform_data->prox_threshold);
-                ret = i2c_smbus_write_byte_data(client, LTR559_PS_CONTR, reg_tbl[REG_PS_CONTR].curval);
-                if(ret<0){
-                        pr_err("%s: enable=(%d) failed!\n", __func__, on);
-                        return ret;
-                }
-                contr_data = i2c_smbus_read_byte_data(client, LTR559_PS_CONTR);
-                if(contr_data != reg_tbl[REG_PS_CONTR].curval){
-                        pr_err("%s: enable=(%d) failed!\n", __func__, on);
-                        return -EFAULT;
-                }
+	timestamp = ktime_get_boottime();
+#endif
+	if (on) {
+		ltr559_set_ps_threshold(client, LTR559_PS_THRES_LOW_0, 0);
+		ltr559_set_ps_threshold(client, LTR559_PS_THRES_UP_0, data->platform_data->prox_threshold);
+		ret = i2c_smbus_write_byte_data(client, LTR559_PS_CONTR, reg_tbl[REG_PS_CONTR].curval);
+		if(ret<0){
+			pr_err("%s: enable=(%d) failed!\n", __func__, on);
+			return ret;
+		}
+		contr_data = i2c_smbus_read_byte_data(client, LTR559_PS_CONTR);
+		if(contr_data != reg_tbl[REG_PS_CONTR].curval){
+			pr_err("%s: enable=(%d) failed!\n", __func__, on);
+			return -EFAULT;
+		}
 
                 msleep(WAKEUP_DELAY);
 
@@ -328,6 +339,12 @@ static int ltr559_ps_enable(struct i2c_client *client, int on)
 		ltr559_ps_dynamic_caliberate(&data->ps_cdev);
 		printk("%s, report ABS_DISTANCE=%s\n",__func__, data->ps_state ? "far" : "near");
 		input_report_abs(data->input_dev_ps, ABS_DISTANCE, data->ps_state);
+#ifdef CONFIG_MACH_WT88047
+		input_event(data->input_dev_ps, EV_SYN, SYN_TIME_SEC,
+				ktime_to_timespec(timestamp).tv_sec);
+		input_event(data->input_dev_ps, EV_SYN, SYN_TIME_NSEC,
+				ktime_to_timespec(timestamp).tv_nsec);
+#endif
 	} else {
 		ret = i2c_smbus_write_byte_data(client, LTR559_PS_CONTR, MODE_PS_StdBy);
 		if(ret<0){
@@ -426,9 +443,15 @@ static void ltr559_ps_work_func(struct work_struct *work)
 	int als_ps_status;
 	int psdata;
 	int j = 0;
+#ifdef CONFIG_MACH_WT88047
+	ktime_t	timestamp;
+#endif
 
 	mutex_lock(&data->op_lock);
 
+#ifdef CONFIG_MACH_WT88047
+	timestamp = ktime_get_boottime();
+#endif
 	als_ps_status = i2c_smbus_read_byte_data(client, LTR559_ALS_PS_STATUS);
 	if (als_ps_status < 0)
 			goto workout;
@@ -479,6 +502,12 @@ static void ltr559_ps_work_func(struct work_struct *work)
 		if((ps_state_last != data->ps_state) || (data->ps_state == 0))
 		{
 			input_report_abs(data->input_dev_ps, ABS_DISTANCE, data->ps_state);
+#ifdef CONFIG_MACH_WT88047
+			input_event(data->input_dev_ps, EV_SYN, SYN_TIME_SEC,
+					ktime_to_timespec(timestamp).tv_sec);
+			input_event(data->input_dev_ps, EV_SYN, SYN_TIME_NSEC,
+					ktime_to_timespec(timestamp).tv_nsec);
+#endif
 			input_sync(data->input_dev_ps);
 			printk("%s, report ABS_DISTANCE=%s\n",__func__, data->ps_state ? "far" : "near");
 
@@ -498,15 +527,21 @@ workout:
 
 static void ltr559_als_work_func(struct work_struct *work)
 {
-        struct ltr559_data *data = container_of(work, struct ltr559_data, als_work.work);
-        struct i2c_client *client=data->client;
-        int als_ps_status;
-        int als_data;
+	struct ltr559_data *data = container_of(work, struct ltr559_data, als_work.work);
+	struct i2c_client *client=data->client;
+	int als_ps_status;
+	int als_data;
+#ifdef CONFIG_MACH_WT88047
+	ktime_t	timestamp;
+#endif
 
         mutex_lock(&data->op_lock);
 
-        if(!data->als_open_state)
-                goto workout;
+#ifdef CONFIG_MACH_WT88047
+	timestamp = ktime_get_boottime();
+#endif
+	if(!data->als_open_state)
+		goto workout;
 
         als_ps_status = i2c_smbus_read_byte_data(client, LTR559_ALS_PS_STATUS);
         if (als_ps_status < 0)
@@ -518,12 +553,18 @@ static void ltr559_als_work_func(struct work_struct *work)
                 if (als_data > 50000)
                         als_data = 50000;
 
-                if ((als_data >= 0) && (als_data != data->last_lux)) {
-                        data->last_lux = als_data;
-                        input_report_abs(data->input_dev_als, ABS_MISC, als_data);
-                        input_sync(data->input_dev_als);
-                }
-        }
+		if ((als_data >= 0) && (als_data != data->last_lux)) {
+			data->last_lux = als_data;
+			input_report_abs(data->input_dev_als, ABS_MISC, als_data);
+#ifdef CONFIG_MACH_WT88047
+			input_event(data->input_dev_als, EV_SYN, SYN_TIME_SEC,
+					ktime_to_timespec(timestamp).tv_sec);
+			input_event(data->input_dev_als, EV_SYN, SYN_TIME_NSEC,
+					ktime_to_timespec(timestamp).tv_nsec);
+#endif
+			input_sync(data->input_dev_als);
+		}
+	}
 
         schedule_delayed_work(&data->als_work,msecs_to_jiffies(data->platform_data->als_poll_interval));
 workout:
@@ -1321,12 +1362,17 @@ int ltr559_probe(struct i2c_client *client, const struct i2c_device_id *id)
         input_set_abs_params(data->input_dev_als, ABS_MISC, 0, 65535, 0, 0);
         input_set_abs_params(data->input_dev_ps, ABS_DISTANCE, 0, 1, 0, 0);
 
-        data->input_dev_als->name = "ltr559-ls";
-        data->input_dev_ps->name = "ltr559-ps";
-        data->input_dev_als->id.bustype = BUS_I2C;
-        data->input_dev_als->dev.parent =&data->client->dev;
-        data->input_dev_ps->id.bustype = BUS_I2C;
-        data->input_dev_ps->dev.parent =&data->client->dev;
+#ifdef CONFIG_MACH_WT88047
+	data->input_dev_als->name = "light";
+	data->input_dev_ps->name = "proximity";
+#else
+	data->input_dev_als->name = "ltr559-ls";
+	data->input_dev_ps->name = "ltr559-ps";
+#endif
+	data->input_dev_als->id.bustype = BUS_I2C;
+	data->input_dev_als->dev.parent =&data->client->dev;
+	data->input_dev_ps->id.bustype = BUS_I2C;
+	data->input_dev_ps->dev.parent =&data->client->dev;
 
         input_set_drvdata(data->input_dev_als, data);
         input_set_drvdata(data->input_dev_ps, data);
