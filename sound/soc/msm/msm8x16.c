@@ -1,4 +1,5 @@
  /* Copyright (c) 2014-2016, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2016 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -66,6 +67,18 @@
 #define WCD_MBHC_DEF_RLOADS 5
 
 #define LPASS_CSR_GP_LPAIF_PRI_PCM_PRI_MODE_MUXSEL 0x07702008
+#define EXT_CLASS_D_EN_DELAY 13000
+#define EXT_CLASS_D_DIS_DELAY 3000
+#define EXT_CLASS_D_DELAY_DELTA 2000
+
+#ifdef WT_86001_USE_AUDIO_PA_GPIO
+#define AW8155A_MODE 3
+#else
+#define AW8155A_MODE 5
+#endif
+
+static struct delayed_work lineout_amp_enable;
+static struct delayed_work lineout_amp_dualmode;
 
 #define MAX_AUX_CODECS	2
 
@@ -408,6 +421,7 @@ static struct snd_soc_dapm_route wcd9335_audio_paths[] = {
 static char const *rx_bit_format_text[] = {"S16_LE", "S24_LE"};
 static const char *const mi2s_tx_ch_text[] = {"One", "Two", "Three", "Four"};
 static const char *const loopback_mclk_text[] = {"DISABLE", "ENABLE"};
+static const char *const lineout_text[] = {"DISABLE", "ENABLE", "DUALMODE"};
 static char const *pri_rx_sample_rate_text[] = {"KHZ_48", "KHZ_96",
 					"KHZ_192", "KHZ_8",
 					"KHZ_16", "KHZ_32"};
@@ -566,6 +580,23 @@ static int mi2s_rx_bit_format_put(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+static void msm8x16_ext_spk_control(u32 enable)
+{
+
+	if (enable) {
+		gpio_direction_output(EXT_SPK_AMP_GPIO, enable);
+		usleep_range(EXT_CLASS_D_EN_DELAY,
+				EXT_CLASS_D_EN_DELAY + EXT_CLASS_D_DELAY_DELTA);
+	} else {
+		gpio_direction_output(EXT_SPK_AMP_GPIO, enable);
+		usleep_range(EXT_CLASS_D_DIS_DELAY,
+				EXT_CLASS_D_DIS_DELAY + EXT_CLASS_D_DELAY_DELTA);
+	}
+
+	pr_debug("%s: %s external speaker PAs.\n", __func__,
+			enable ? "Enable" : "Disable");
+}
+
 static int loopback_mclk_get(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
@@ -677,6 +708,67 @@ static int loopback_mclk_put(struct snd_kcontrol *kcontrol,
 		break;
 	}
 	return ret;
+}
+
+static void msm8x16_ext_spk_delayed_enable(struct work_struct *work)
+{
+	int i = 0;
+
+	gpio_direction_output(EXT_SPK_AMP_HEADSET_GPIO, false);
+	usleep_range(EXT_CLASS_D_EN_DELAY,
+			EXT_CLASS_D_EN_DELAY + EXT_CLASS_D_DELAY_DELTA);
+
+	for (i = 0; i < AW8155A_MODE; i++) {
+		gpio_direction_output(EXT_SPK_AMP_GPIO, false);
+		gpio_direction_output(EXT_SPK_AMP_GPIO, true);
+	}
+	usleep_range(EXT_CLASS_D_EN_DELAY,
+			EXT_CLASS_D_EN_DELAY + EXT_CLASS_D_DELAY_DELTA);
+
+}
+static void msm8x16_ext_spk_delayed_dualmode(struct work_struct *work)
+{
+	int i = 0;
+
+	gpio_direction_output(EXT_SPK_AMP_HEADSET_GPIO, true);
+	usleep_range(EXT_CLASS_D_EN_DELAY,
+			EXT_CLASS_D_EN_DELAY + EXT_CLASS_D_DELAY_DELTA);
+
+	for (i = 0; i < AW8155A_MODE; i++) {
+		gpio_direction_output(EXT_SPK_AMP_GPIO, false);
+		gpio_direction_output(EXT_SPK_AMP_GPIO, true);
+	}
+	usleep_range(EXT_CLASS_D_EN_DELAY,
+			EXT_CLASS_D_EN_DELAY + EXT_CLASS_D_DELAY_DELTA);
+
+}
+static int lineout_status_get(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	return 0;
+}
+static int lineout_status_put(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	int state = 0;
+	state = ucontrol->value.integer.value[0];
+
+	switch (state) {
+	case 1:
+		schedule_delayed_work(&lineout_amp_enable, msecs_to_jiffies(50));
+		break;
+	case 0:
+
+		msm8x16_ext_spk_control(0);
+		break;
+	case 2:
+		schedule_delayed_work(&lineout_amp_dualmode, msecs_to_jiffies(50));
+		break;
+	default:
+		pr_err("%s: Unexpected input value\n", __func__);
+		break;
+	}
+	return 0;
 }
 
 static int msm_btsco_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
@@ -1188,6 +1280,7 @@ static const struct soc_enum msm_snd_enum[] = {
 	SOC_ENUM_SINGLE_EXT(2, loopback_mclk_text),
 	SOC_ENUM_SINGLE_EXT(6, pri_rx_sample_rate_text),
 	SOC_ENUM_SINGLE_EXT(6, mi2s_tx_sample_rate_text),
+	SOC_ENUM_SINGLE_EXT(3, lineout_text),
 };
 
 static const char *const btsco_rate_text[] = {"BTSCO_RATE_8KHZ",
@@ -1211,6 +1304,8 @@ static const struct snd_kcontrol_new msm_snd_controls[] = {
 			pri_rx_sample_rate_get, pri_rx_sample_rate_put),
 	SOC_ENUM_EXT("MI2S TX SampleRate", msm_snd_enum[4],
 			mi2s_tx_sample_rate_get, mi2s_tx_sample_rate_put),
+	SOC_ENUM_EXT("Lineout_1 amp", msm_snd_enum[5],
+			lineout_status_get, lineout_status_put),
 };
 
 static int msm8x16_mclk_event(struct snd_soc_dapm_widget *w,
@@ -1793,6 +1888,9 @@ static int msm_audrx_init(struct snd_soc_pcm_runtime *rtd)
 			return ret;
 		}
 	}
+	INIT_DELAYED_WORK(&lineout_amp_enable, msm8x16_ext_spk_delayed_enable);
+	INIT_DELAYED_WORK(&lineout_amp_dualmode, msm8x16_ext_spk_delayed_dualmode);
+
 	return msm8x16_wcd_hs_detect(codec, &mbhc_cfg);
 }
 
@@ -2433,22 +2531,6 @@ static struct snd_soc_dai_link msm8x16_dai[] = {
 		.ignore_pmdown_time = 1,
 		.codec_dai_name = "snd-soc-dummy-dai",
 		.codec_name = "snd-soc-dummy",
-	},
-	{ /* hw:x, 26 */
-		.name = "QCHAT",
-		.stream_name = "QCHAT",
-		.cpu_dai_name   = "QCHAT",
-		.platform_name  = "msm-pcm-voice",
-		.dynamic = 1,
-		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
-				SND_SOC_DPCM_TRIGGER_POST},
-		.no_host_mode = SND_SOC_DAI_LINK_NO_HOST,
-		.ignore_suspend = 1,
-		/* this dainlink has playback support */
-		.ignore_pmdown_time = 1,
-		.codec_dai_name = "snd-soc-dummy-dai",
-		.codec_name = "snd-soc-dummy",
-		.be_id = MSM_FRONTEND_DAI_QCHAT,
 	},
 	{/* hw:x,27 */
 		.name = "VoiceMMode1",
@@ -3128,7 +3210,7 @@ static int msm8x16_asoc_machine_probe(struct platform_device *pdev)
 	if (!pdata) {
 		dev_err(&pdev->dev, "Can't allocate msm8x16_asoc_mach_data\n");
 		ret = -ENOMEM;
-		goto err1;
+		goto err;
 	}
 
 	pdata->vaddr_gpio_mux_spkr_ctl =
@@ -3361,7 +3443,6 @@ err:
 	if (pdata->vaddr_gpio_mux_pcm_ctl)
 		iounmap(pdata->vaddr_gpio_mux_pcm_ctl);
 	devm_kfree(&pdev->dev, pdata);
-err1:
 	return ret;
 }
 

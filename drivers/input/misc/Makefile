@@ -79,6 +79,7 @@ obj-$(CONFIG_SENSORS_BMA2X2)	+= bstclass.o
 
 obj-$(CONFIG_SENSORS_BMA2X2)	+= bma2x2.o
 obj-$(CONFIG_SENSORS_LTR553)	+= ltr553.o
+obj-$(CONFIG_INPUT_LTR559)	  += ltr559.o
 
 ifeq ($(CONFIG_SENSORS_BMA2X2_ENABLE_INT1),y)
 	EXTRA_CFLAGS += -DBMA2X2_ENABLE_INT1
@@ -104,3 +105,7 @@ obj-$(CONFIG_SENSORS_BMI160_I2C) += bmi160_i2c.o
 ifeq ($(CONFIG_SENSORS_BMI160_I2C),y)
 	EXTRA_CFLAGS += -DBMI_USE_BASIC_I2C_FUNC
 endif
+obj-$(CONFIG_INPUT_LTR553)	  += ltr553.o
+obj-$(CONFIG_SENSORS_YAS537)  += yas_mag_drv-yas532.o
+obj-$(CONFIG_SENSORS_YAS537)  += yas_mag_drv-yas537.o
+obj-$(CONFIG_SENSORS_YAS537) += yas_mag_kernel.o
