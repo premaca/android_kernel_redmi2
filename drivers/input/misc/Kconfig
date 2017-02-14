@@ -893,5 +893,23 @@ config SENSORS_BMI160_ENABLE_INT2
 	help
 	 If you say yes here, you get INT2 support for Bosch Sensortec
 	 sensors BMI160.
+
+config INPUT_LTR559
+	   tristate "LTR559 light/proximity sensor support"
+	   depends on I2C
+	   default n
+	   help
+		 Driver for LTR559 light/proximity sensor.
+
+config SENSORS_YAS537
+	tristate "YAS Geomagnetic Sensor"
+	depends on I2C
+	help
+	  Say Y here if you want to enable the YAS537 magnetic sensor
+	  driver.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called yas537.
+
 endif
 
