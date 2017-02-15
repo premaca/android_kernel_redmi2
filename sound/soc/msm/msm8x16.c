@@ -1278,9 +1278,9 @@ static const struct soc_enum msm_snd_enum[] = {
 	SOC_ENUM_SINGLE_EXT(2, rx_bit_format_text),
 	SOC_ENUM_SINGLE_EXT(4, mi2s_tx_ch_text),
 	SOC_ENUM_SINGLE_EXT(2, loopback_mclk_text),
+	SOC_ENUM_SINGLE_EXT(3, lineout_text),
 	SOC_ENUM_SINGLE_EXT(6, pri_rx_sample_rate_text),
 	SOC_ENUM_SINGLE_EXT(6, mi2s_tx_sample_rate_text),
-	SOC_ENUM_SINGLE_EXT(3, lineout_text),
 };
 
 static const char *const btsco_rate_text[] = {"BTSCO_RATE_8KHZ",
@@ -1300,12 +1300,12 @@ static const struct snd_kcontrol_new msm_snd_controls[] = {
 			loopback_mclk_get, loopback_mclk_put),
 	SOC_ENUM_EXT("Internal BTSCO SampleRate", msm_btsco_enum[0],
 		     msm_btsco_rate_get, msm_btsco_rate_put),
+	SOC_ENUM_EXT("Lineout_1 amp", msm_snd_enum[3],
+			lineout_status_get, lineout_status_put),
 	SOC_ENUM_EXT("RX SampleRate", msm_snd_enum[3],
 			pri_rx_sample_rate_get, pri_rx_sample_rate_put),
 	SOC_ENUM_EXT("MI2S TX SampleRate", msm_snd_enum[4],
 			mi2s_tx_sample_rate_get, mi2s_tx_sample_rate_put),
-	SOC_ENUM_EXT("Lineout_1 amp", msm_snd_enum[5],
-			lineout_status_get, lineout_status_put),
 };
 
 static int msm8x16_mclk_event(struct snd_soc_dapm_widget *w,
