@@ -30,7 +30,7 @@ TOOL_CHAIN_ARM=arm-eabi-
 #@@@@@@@@@@@@@@@@@@@@@@ DEFINITIONS BEGIN @@@@@@@@@@@@@@@@@@@@@@@@@@@#
 ##### Tool-chain, you should get it yourself which tool-chain 
 ##### you would like to use
-KERNEL_TOOLCHAIN=/home/premaca/device_repos/arm-eabi-4.8/bin/$TOOL_CHAIN_ARM
+KERNEL_TOOLCHAIN=/home/premaca/repos_extra/arm-eabi-4.8/bin/$TOOL_CHAIN_ARM
 
 ## This script should be inside the kernel-code directory
 KERNEL_DIR=$PWD
@@ -42,7 +42,7 @@ KERNEL_DEFCONFIG=msm8916-perf_defconfig
 AK2_DIR=$PWD/AnyKernel2
 
 ## FINAL ZIP
-JERRICA_COSMOS_RELEASE=Jerrica-Caf-Cosmos-$JERRICA_POSTFIX.zip
+JERRICA_COSMOS_RELEASE=Jerrica-$JERRICA_POSTFIX.zip
 
 ## make jobs
 MAKE_JOBS=10
