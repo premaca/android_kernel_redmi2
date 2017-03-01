@@ -282,6 +282,25 @@ int power_supply_set_dp_dm(struct power_supply *psy, int value)
 }
 EXPORT_SYMBOL(power_supply_set_dp_dm);
 
+int power_supply_get_battery_charge_state(struct power_supply *psy)
+{
+	union power_supply_propval ret = {0,};
+
+	if (!psy) {
+		 pr_err("power supply is NULL\n");
+	}
+
+	if (psy->get_property) {
+		psy->get_property(psy, POWER_SUPPLY_PROP_PRESENT, &ret);
+	}
+
+	pr_debug("online:%d\n", ret.intval);
+
+	return ret.intval;
+}
+
+EXPORT_SYMBOL(power_supply_get_battery_charge_state);
+
 static int __power_supply_changed_work(struct device *dev, void *data)
 {
 	struct power_supply *psy = (struct power_supply *)data;

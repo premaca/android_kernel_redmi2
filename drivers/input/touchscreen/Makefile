@@ -78,7 +78,6 @@ obj-$(CONFIG_TOUCHSCREEN_WM97XX_MAINSTONE)	+= mainstone-wm97xx.o
 obj-$(CONFIG_TOUCHSCREEN_WM97XX_ZYLONITE)	+= zylonite-wm97xx.o
 obj-$(CONFIG_TOUCHSCREEN_W90X900)	+= w90p910_ts.o
 obj-$(CONFIG_TOUCHSCREEN_TPS6507X)	+= tps6507x-ts.o
-obj-$(CONFIG_TOUCHSCREEN_FT5X06)	+= ft5x06_ts.o
 obj-$(CONFIG_TOUCHSCREEN_MSTAR21XX)	+= msg21xx_ts.o
 obj-$(CONFIG_TOUCHSCREEN_SYNAPTICS_DSX_RMI4_DEV)	+= synaptics_rmi_dev.o
 obj-$(CONFIG_TOUCHSCREEN_SYNAPTICS_DSX_FW_UPDATE) 	+= synaptics_fw_update.o
@@ -93,6 +92,24 @@ obj-$(CONFIG_TOUCHSCREEN_IT7260_I2C)    += it7258_ts_i2c.o
 obj-$(CONFIG_TOUCHSCREEN_HIMAX_HX852xES)      += hx852xes/
 
 obj-$(CONFIG_TOUCHSCREEN_HIMAX852XES)	+= himax_852xES/
+
+ifeq ($(CONFIG_ARM64), y)
+obj-$(CONFIG_TOUCHSCREEN_FT5X06)	+= ft5x06_ts.o focal_mcap_test_lib64.a
+else  # Target is 32-bit.
+obj-$(CONFIG_TOUCHSCREEN_FT5X06)	+= ft5x06_ts.o focal_mcap_test_lib32.a
+endif
+
+ifeq ($(CONFIG_ARM64), y)
+obj-$(CONFIG_TOUCHSCREEN_FT5X06)	+= ft5x06_720p.o focal_mcap_test_lib64.a
+else  # Target is 32-bit.
+obj-$(CONFIG_TOUCHSCREEN_FT5X06)	+= ft5x06_720p.o focal_mcap_test_lib32.a
+endif
+
+ifeq ($(CONFIG_ARM64), y)
+obj-$(CONFIG_TOUCHSCREEN_H2X)	+= ft5x06_h2x.o focal_mcap_test_lib64.a
+else  # Target is 32-bit.
+obj-$(CONFIG_TOUCHSCREEN_H2X)	+= ft5x06_h2x.o focal_mcap_test_lib32.a
+endif
 
 obj-$(CONFIG_MACH_LONGCHEER)	+= lct_tp_fm_info.o
 obj-$(CONFIG_MACH_LONGCHEER)	+= lct_ctp_selftest.o
