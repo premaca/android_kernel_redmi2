@@ -36,7 +36,7 @@ KERNEL_TOOLCHAIN=/home/premaca/repos_extra/arm-eabi-4.8/bin/$TOOL_CHAIN_ARM
 KERNEL_DIR=$PWD
 
 ## should be preset in arch/arm/configs of kernel-code
-KERNEL_DEFCONFIG=msm8916-perf_defconfig
+KERNEL_DEFCONFIG=wt88047_kernel_defconfig
 
 ## AnyKernel2 
 AK2_DIR=$PWD/AnyKernel2
